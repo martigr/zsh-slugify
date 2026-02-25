@@ -44,7 +44,12 @@ function slugify-file() {
 
     local slugified
     slugified=$(slugify "$name")
-    mv "$file" "$dir/$slugified$ext"
+    local target
+    target="$dir/$slugified$ext"
+
+    if [[ "$file" != "$target" ]]; then
+      mv "$file" "$target"
+    fi
   else
     echo "File not found: $file" >&2
   fi
