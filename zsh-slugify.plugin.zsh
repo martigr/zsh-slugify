@@ -1,3 +1,6 @@
+# Slugify plugin for Zsh
+
+# Slugify a string or file name to a URL-friendly format.
 function slugify() {
   local input
   if [[ -p /dev/stdin ]]; then
@@ -11,3 +14,52 @@ function slugify() {
   | tr '[:upper:]' '[:lower:]' \
   | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g'
 }
+
+# Slugify a file name and rename the file.
+function slugify-file() {
+  local file="$1"
+  if [[ -f "$file" ]]; then
+    local dir
+    dir=$(dirname "$file")
+    local base
+    base=$(basename "$file")
+    local name
+    local ext
+
+    if [[ "$base" == .* && "$base" != *.*.* ]]; then
+      # Hidden file without extension (e.g., .gitignore)
+      name="$base"
+      ext=""
+    elif [[ "$base" == *.* ]]; then
+      # Regular file with extension (e.g., my file.txt)
+      name="${base%.*}"
+      ext=".${base##*.}"
+    else
+      # Regular file without extension (e.g., README)
+      name="$base"
+      ext=""
+    fi
+
+    local slugified
+    slugified=$(slugify "$name")
+    mv "$file" "$dir/$slugified$ext"
+  else
+    echo "File not found: $file" >&2
+  fi
+}
+
+# Slugify all file names in a directory (not recursive).
+function slugify-dir() {
+  local dir="$1"
+  if [[ -d "$dir" ]]; then
+    find "$dir" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' file; do
+      slugify-file "$file"
+    done
+  else
+    echo "Directory not found: $dir" >&2
+  fi
+}
+
+# Aliases for convenience
+alias slugifyf='slugify-file'
+alias slugifyd='slugify-dir'
