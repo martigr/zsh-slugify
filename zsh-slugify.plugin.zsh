@@ -3,10 +3,12 @@
 # Slugify a string or file name to a URL-friendly format.
 function slugify() {
   local input
-  if [[ -p /dev/stdin ]]; then
+  if [[ $# -gt 0 ]]; then
+    input="$*"
+  elif [[ -p /dev/stdin ]]; then
     input=$(cat)
   else
-    input="$*"
+    input=""
   fi
 
   echo "$input" \
