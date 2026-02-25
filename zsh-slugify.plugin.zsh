@@ -3,6 +3,11 @@
 # Slugify a string or file name to a URL-friendly format.
 function slugify() {
   local input
+  local separator
+  local keep_case
+  separator="${SLUGIFY_SEPARATOR:--}"
+  keep_case="${SLUGIFY_KEEP_CASE:-0}"
+
   if [[ $# -gt 0 ]]; then
     input="$*"
   elif [[ -p /dev/stdin ]]; then
@@ -11,10 +16,19 @@ function slugify() {
     input=""
   fi
 
-  echo "$input" \
-  | iconv -t ascii//TRANSLIT 2>/dev/null \
-  | tr '[:upper:]' '[:lower:]' \
-  | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g'
+  local normalized
+  if [[ "$keep_case" == "1" || "$keep_case" == "true" ]]; then
+    normalized=$(echo "$input" \
+    | iconv -t ascii//TRANSLIT 2>/dev/null \
+    | sed -E 's/[^A-Za-z0-9_-]+/ /g; s/^ +| +$//g')
+  else
+    normalized=$(echo "$input" \
+    | iconv -t ascii//TRANSLIT 2>/dev/null \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9_-]+/ /g; s/^ +| +$//g')
+  fi
+
+  echo "${normalized// /$separator}"
 }
 
 # Slugify a file name and rename the file.
